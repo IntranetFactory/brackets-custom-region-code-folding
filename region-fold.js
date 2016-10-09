@@ -1,4 +1,5 @@
 // Function based on brace-fold.js addon in CodeMirror Library with minor altering.
+// use VS #region/#enderegion
 // Modified for brackets by Patrick Oladimeji.
 // CodeMirror 4.1.1, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -11,10 +12,12 @@ define(function (require, exports, module) {
         space = /\s/;
 
     function regionFold(cm, start) {
-        var startWord = Preferences.get("startRegionWord"),
-            endWord = Preferences.get("endRegionWord"),
-            startRegionRegex = new RegExp("\\W+" + startWord, ["i"]),
-            endRegionRegex = new RegExp("\\W+" + endWord, ["i"]);
+        var startWord = "#region",
+            endWord = "#endregion",
+            startRegionRegex = new RegExp(startWord + " \\w*", ["i"]),
+            startRegion = "",
+            endRegion = "",
+            endRegionRegex = new RegExp(endWord, ["i"]);
 
         var line = start.line, i, j;
         var startCh = 0, stack = [], token;
@@ -34,9 +37,18 @@ define(function (require, exports, module) {
                     token = cm.getTokenAt(CodeMirror.Pos(i, j + 1));
                     if (token) {
                         if (token.string.length && token.type === "comment") {
-                            nextOpen = token.string.toLowerCase().match(startRegionRegex) ?
-                                    (token.start + token.string.toLowerCase().indexOf(startWord)) : -1;
-                            nextClose = token.string.toLowerCase().match(endRegionRegex) ? token.end : -1;
+                            
+                            nextOpen = -1;
+                            startRegion = token.string.toLowerCase().match(startRegionRegex);
+                            if(startRegion) {
+                                nextOpen = token.start + token.string.toLowerCase().indexOf(startRegion) + startRegion[0].length;
+                            }
+                            
+                            nextClose = -1;
+                            endRegion = token.string.toLowerCase().match(endRegionRegex);
+                            if(endRegion) {
+                                nextClose = token.start + token.string.toLowerCase().indexOf(endRegion) + endRegion[0].length;
+                            }
 
                             if (nextOpen  > -1) {
                                 stack.push(nextOpen);
